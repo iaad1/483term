@@ -38,7 +38,8 @@ trainDf['onpromotion'] = (trainDf['onpromotion'] > 0).astype(int)
 testDf['onpromotion'] = (testDf['onpromotion'] > 0).astype(int)
 
 # Change all the holiday junk to a simple is_holiday numerical column.
-trainDf['is_holiday'] = (pd.notna(trainDf['type']) & trainDf['transferred'] != True).astype(int)
-print(trainDf.head(4000))
+trainDf['is_holiday'] = (~trainDf['type'].isna()).astype(int)
+testDf['is_holiday'] = (~testDf['type'].isna()).astype(int)
 
-
+# Create a list of the columns that we want
+desired = ['store_nbr', 'family', 'sales', 'onpromotion', 'dcoilwtico', 'is_holiday']
