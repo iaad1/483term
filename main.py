@@ -1,6 +1,7 @@
 # shbang
 # Judah Tanninen
 # Shawyan Tabari
+# Elesey Razumovskiy
 
 # Term 483 Project
 # Kaggle: https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data
