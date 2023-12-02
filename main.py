@@ -17,7 +17,8 @@ from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from scipy.stats import randint, uniform
 from sklearn.cluster import KMeans
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_log_error, median_absolute_error, explained_variance_score, mean_squared_error
+from sklearn import metrics
+import matplotlib.pyplot as plt
 
 
 # STEP 1 (SECURE THE KEYS!)
@@ -49,6 +50,32 @@ testDf['is_holiday'] = (~testDf['type'].isna()).astype(int)
 
 # Create a list of the columns that we want
 desired = ['store_nbr', 'family', 'sales', 'onpromotion', 'dcoilwtico', 'is_holiday']
+
+
+#Graphing the data that we have to visualize it
+# Convert 'date' to datetime and sort
+transactionsDf['date'] = pd.to_datetime(transactionsDf['date'])
+transactionsDf.sort_values('date', inplace=True)
+
+# Aggregate transactions by date
+daily_transactions = transactionsDf.groupby('date')['transactions'].sum().reset_index()
+
+daily_transactions['7_day_MA'] = daily_transactions['transactions'].rolling(window=7).mean()
+daily_transactions['14_day_MA'] = daily_transactions['transactions'].rolling(window=14).mean()
+daily_transactions['30_day_MA'] = daily_transactions['transactions'].rolling(window=30).mean()
+daily_transactions['60_day_MA'] = daily_transactions['transactions'].rolling(window=60).mean()
+
+plt.figure(figsize=(12, 6))
+plt.plot(daily_transactions['date'], daily_transactions['transactions'], label='Total Daily Transactions')
+plt.plot(daily_transactions['date'], daily_transactions['7_day_MA'], label='7-Day MA')
+plt.plot(daily_transactions['date'], daily_transactions['14_day_MA'], label='14-Day MA')
+plt.plot(daily_transactions['date'], daily_transactions['30_day_MA'], label='30-Day MA')
+plt.plot(daily_transactions['date'], daily_transactions['60_day_MA'], label='60-Day MA')
+plt.title('Total Transactions Over Time with Moving Averages')
+plt.xlabel('Date')
+plt.ylabel('Transactions')
+plt.legend()
+plt.show()
 
 
 #imputers for handling missing values
@@ -98,7 +125,7 @@ XTrain, XVal, yTrain, yVal = train_test_split(
 
 #flattening y_train and y_val for model fitting and validation
 #gradient boost expects a 1D array but minmaxscaler generates a 2D array
-#so we need to resize it
+#we mighte need to resize it, can test without 
 yTrain = yTrain.ravel()
 yVal = yVal.ravel()
 
@@ -129,22 +156,47 @@ print(randomSearch.best_params_)
 #validation
 valPredictionsScaled = bestModel.predict(XVal)
 
-#inverse transform the scaled predictions
-#rescalling data so that metrics analysis makes sense
-valPredictions = targetScaler.inverse_transform(valPredictionsScaled.reshape(-1, 1))
+# Ensure that predictions and actual values are greater than 0
+yValOriginalClipped = np.clip(yValOriginal, a_min=0.01, a_max=None)  # Replace 0 and negative values with a small positive number
+valPredictionsClipped = np.clip(valPredictions, a_min=0.01, a_max=None)
 
-yValOriginal = targetScaler.inverse_transform(yVal.reshape(-1, 1))
+# Calculate metrics
+mae = mean_absolute_error(yValOriginalClipped, valPredictionsClipped)
+r2 = r2_score(yValOriginalClipped, valPredictionsClipped)
+rmsle = np.sqrt(mean_squared_log_error(yValOriginalClipped, valPredictionsClipped))
 
-rmse = np.sqrt(mean_squared_error(yValOriginal, valPredictions))
-mae = mean_absolute_error(yValOriginal, valPredictions)
-r2 = r2_score(yValOriginal, valPredictions)
-#msle = mean_squared_log_error(yValOriginal, valPredictions)
-median_ae = median_absolute_error(yValOriginal, valPredictions)
-explained_variance = explained_variance_score(yValOriginal, valPredictions)
 
-print(f'Validation RMSE: {rmse}')
+# Print metrics
 print(f'Validation MAE: {mae}')
 print(f'Validation R-squared: {r2}')
-#print(f'Validation MSLE: {msle}')
-print(f'Validation Median Absolute Error: {median_ae}')
-print(f'Validation Explained Variance Score: {explained_variance}')
+print(f'Validation RMSLE: {rmsle}')
+
+
+#visulization
+# Plotting Actual vs Predicted values
+plt.figure(figsize=(10, 6))
+plt.scatter(yValOriginal, valPredictions, alpha=0.5)
+plt.plot(yValOriginal, yValOriginal, color="red")  # Line showing perfect predictions
+plt.title('Actual vs Predicted Sales')
+plt.xlabel('Actual Sales')
+plt.ylabel('Predicted Sales')
+plt.show()
+
+# Calculating residuals
+residuals = yValOriginal - valPredictions
+
+# Plotting residuals
+plt.figure(figsize=(10, 6))
+plt.scatter(yValOriginal, residuals, alpha=0.5)
+plt.hlines(y=0, xmin=yValOriginal.min(), xmax=yValOriginal.max(), colors='red')
+plt.title('Residuals of Predictions')
+plt.xlabel('Actual Sales')
+plt.ylabel('Residuals')
+plt.show()
+
+
+# Final predictions on test data (can be used as needed)
+# X_test = test_data.drop('id', axis=1)
+# test_data['sales'] = best_model.predict(X_test)
+# output = test_data[['id', 'sales']]
+# output.to_csv('predictions.csv', index=False)
