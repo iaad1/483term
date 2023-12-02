@@ -28,6 +28,7 @@ holidayDf = pd.read_csv('holidays_events.csv')
 oilDf = pd.read_csv('oil.csv')
 trainDf = pd.read_csv('train.csv')
 testDf = pd.read_csv('test.csv')
+transactionsDf = pd.read_csv('transactions.csv')
 
 # STEP 2 (ASCEND FROM DARKNESS!)
 # Merge the holiday and oil data onto the training and test frames
