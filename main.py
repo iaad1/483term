@@ -9,6 +9,7 @@
 # Imports
 import pandas as pd
 import numpy as np
+import datetime as dt
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, OneHotEncoder
@@ -29,6 +30,10 @@ oilDf = pd.read_csv('oil.csv')
 trainDf = pd.read_csv('train.csv')
 testDf = pd.read_csv('test.csv')
 transactionsDf = pd.read_csv('transactions.csv')
+
+# Before merging, limit the training set to 1 year, 2015
+trainDf['datetime'] = pd.to_datetime(trainDf['date'])
+trainDf = trainDf[trainDf['datetime'].dt.year == 2015]
 
 # STEP 2 (ASCEND FROM DARKNESS!)
 # Merge the holiday and oil data onto the training and test frames
@@ -53,6 +58,10 @@ testDf['is_holiday'] = (~testDf['type'].isna()).astype(int)
 # Convert the dates to a month-date combo that we can then encode to correlate with date (the year doesn't matter that much)
 trainDf['monthday'] = trainDf['date'].str[5:] # Get just month and day
 testDf['monthday'] = testDf['date'].str[5:] # Get just month and day
+
+# Create a list of the numerical and categorical columns that we want
+desiredNumerical = ['store_nbr', 'onpromotion', 'dcoilwtico', 'is_holiday']
+desiredCategorical = ['family']
 
 # STEP 4 (Unleash the horde)
 # Graphing of the transactions data. 
@@ -80,7 +89,7 @@ plt.title('Total Transactions Over Time with Moving Averages')
 plt.xlabel('Date')
 plt.ylabel('Transactions')
 plt.legend()
-plt.show()
+# plt.show()
 
 
 
@@ -88,9 +97,6 @@ plt.show()
 # PREPROCESSING
 # Converting categorical columns into numerical ones, replace empty values, scali
 print("Preprocessing...")
-# Create a list of the numerical and categorical columns that we want
-desiredNumerical = ['store_nbr', 'family', 'sales', 'onpromotion', 'dcoilwtico', 'is_holiday']
-desiredCategorical = ['family', 'monthday']
 
 #preprocessing pipelines
 numPipe = Pipeline([
@@ -100,7 +106,7 @@ numPipe = Pipeline([
 
 catPipe = Pipeline([
     ('imputer', SimpleImputer(strategy='most_frequent')),
-    ('labele', LabelEncoder())
+    ('labele', OneHotEncoder())
 ])
 
 preprocessor = ColumnTransformer([
@@ -113,24 +119,27 @@ preprocessor = ColumnTransformer([
 print('Beginning model creating.')
 # Hyper params
 params = {
-    'model__n_estimators': [100, 200, 300], #made this large since data set is in the millions of rows
-    'model__max_depth': [2, 3, 4],  
-    'model__max_features': [None, 'sqrt', 'log2'],  
+    'model__n_estimators': [100], #made this large since data set is in the millions of rows
+    'model__max_depth': [2],  
+    'model__max_features': ['sqrt'],  
 }
 
 # Creates the xs and ys
+
 xs = trainDf[desiredCategorical + desiredNumerical]
-ys = trainDf['sales']
+ys = np.maximum(trainDf['sales'], 0)
+print(ys)
+
 
 # Create the pipeline
 model = GradientBoostingRegressor()
-pipeline = Pipeline([ # Techincally only two steps, but the preprocessor contains multiple steps
+pipeline = Pipeline([ # Technically only two steps, but the preprocessor contains multiple steps
     ('preprocessor', preprocessor), 
     ('model', model)
 ])
 
 # Create the grid search
-search = GridSearchCV(pipeline, params, scoring="neg_mean_squared_error", n_jobs=-1)
+search = GridSearchCV(pipeline, params, scoring="neg_mean_squared_log_error", n_jobs=-1, error_score='raise')
 
 #fitting
 search.fit(xs, ys)
@@ -138,6 +147,10 @@ bestModel = search.best_estimator_
 
 print("Best hyperparameters:")
 print(search.best_params_)
+print("Best score")
+print(search.best_score_)
+
+
 exit(0)
 
 #validation
