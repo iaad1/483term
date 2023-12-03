@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from scipy.stats import randint, uniform
 from sklearn.cluster import KMeans
 from sklearn.ensemble import GradientBoostingRegressor
@@ -32,6 +32,7 @@ transactionsDf = pd.read_csv('transactions.csv')
 
 # STEP 2 (ASCEND FROM DARKNESS!)
 # Merge the holiday and oil data onto the training and test frames
+print('Merging additional data frames into train/test frames')
 trainDf = pd.merge(trainDf, oilDf, on="date", how="left") # Cute little left join
 trainDf = pd.merge(trainDf, holidayDf, on="date", how="left")
 testDf = pd.merge(testDf, oilDf, on="date", how="left") # Cute little left join
@@ -40,7 +41,7 @@ testDf = pd.merge(testDf, holidayDf, on="date", how="left")
 
 # STEP 3 (RAIN FIRE)
 # Prepare the dataset, convert values
-
+print('Preparing data, converting values etc.')
 # Convert onpromotion to a boolean value
 trainDf['onpromotion'] = (trainDf['onpromotion'] > 0).astype(int)
 testDf['onpromotion'] = (testDf['onpromotion'] > 0).astype(int)
@@ -49,11 +50,14 @@ testDf['onpromotion'] = (testDf['onpromotion'] > 0).astype(int)
 trainDf['is_holiday'] = (~trainDf['type'].isna()).astype(int)
 testDf['is_holiday'] = (~testDf['type'].isna()).astype(int)
 
-# Create a list of the columns that we want
-desired = ['store_nbr', 'family', 'sales', 'onpromotion', 'dcoilwtico', 'is_holiday']
+# Convert the dates to a month-date combo that we can then encode to correlate with date (the year doesn't matter that much)
+trainDf['monthday'] = trainDf['date'].str[5:] # Get just month and day
+testDf['monthday'] = testDf['date'].str[5:] # Get just month and day
 
+# STEP 4 (Unleash the horde)
+# Graphing of the transactions data. 
+print("Generating transactions graph")
 
-#Graphing the data that we have to visualize it
 # Convert 'date' to datetime and sort
 transactionsDf['date'] = pd.to_datetime(transactionsDf['date'])
 transactionsDf.sort_values('date', inplace=True)
@@ -79,80 +83,62 @@ plt.legend()
 plt.show()
 
 
-#imputers for handling missing values
-numImp = SimpleImputer(strategy='mean')
-catImp = SimpleImputer(strategy='most_frequent')
+
+# STEP 5 (Skewer the winged beast)
+# PREPROCESSING
+# Converting categorical columns into numerical ones, replace empty values, scali
+print("Preprocessing...")
+# Create a list of the numerical and categorical columns that we want
+desiredNumerical = ['store_nbr', 'family', 'sales', 'onpromotion', 'dcoilwtico', 'is_holiday']
+desiredCategorical = ['family', 'monthday']
 
 #preprocessing pipelines
-numPipe = Pipeline(steps=[
-    ('imputer', numImp),
+numPipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='mean')),
     ('scaler', MinMaxScaler())
 ])
 
-catPipe = Pipeline(steps=[
-    ('imputer', catImp),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+catPipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('labele', LabelEncoder())
 ])
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('num', numPipe, ['onpromotion', 'dcoilwtico', 'is_holiday', 'store_nbr']),
-        ('cat', catPipe, ['family'])
+preprocessor = ColumnTransformer([
+        ('num', numPipe, desiredNumerical),
+        ('cat', catPipe, desiredCategorical)
     ])
 
-#hyperparas
-hyperParam = {
-    'model__n_estimators': randint(50, 1000), #made this large since data set is in the millions of rows
-    'model__learning_rate': uniform(0.01, 0.3), 
-    'model__max_depth': randint(2, 10),  
-    'model__min_samples_split': randint(2, 10),  
-    'model__min_samples_leaf': randint(1, 10), 
-    'model__max_features': ['sqrt', 'log2'],  
-    'model__subsample': uniform(0.5, 0.5),  #fraction of samples to be used for fitting the individual base learners
+# STEP 6 (Wield a fist of iron)
+# Here, we create a pipeline that takes in hyper params and creates and finds the best model for us to use.
+print('Beginning model creating.')
+# Hyper params
+params = {
+    'model__n_estimators': [100, 200, 300], #made this large since data set is in the millions of rows
+    'model__max_depth': [2, 3, 4],  
+    'model__max_features': [None, 'sqrt', 'log2'],  
 }
 
-#scale the target variable 'sales' to range 0-1, I have to go back to origianl values
-#when doing the analysis since it is scaled differently and the analysis will look weird for 0-1
-targetScaler = MinMaxScaler()
-yTrainScaled = targetScaler.fit_transform(trainDf[['sales']])
+# Creates the xs and ys
+xs = trainDf[desiredCategorical + desiredNumerical]
+ys = trainDf['sales']
 
-#splitting the data for training and validation
-XTrain, XVal, yTrain, yVal = train_test_split(
-    trainDf.drop('sales', axis=1), 
-    yTrainScaled, 
-    test_size=0.2, 
-    random_state=42
-)
+# Create the pipeline
+model = GradientBoostingRegressor()
+pipeline = Pipeline([ # Techincally only two steps, but the preprocessor contains multiple steps
+    ('preprocessor', preprocessor), 
+    ('model', model)
+])
 
-#flattening y_train and y_val for model fitting and validation
-#gradient boost expects a 1D array but minmaxscaler generates a 2D array
-#we mighte need to resize it, can test without 
-yTrain = yTrain.ravel()
-yVal = yVal.ravel()
-
-
-#pipeline with GradientBoostingRegressor
-model = GradientBoostingRegressor(random_state=42)
-pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', model)])
-
-#randomizedSearchCV
-randomSearch = RandomizedSearchCV(
-    pipeline, 
-    param_distributions=hyperParam, 
-    n_iter=10, 
-    cv=5, 
-    scoring='neg_mean_squared_error', 
-    random_state=42,
-    n_jobs=-1
-)
+# Create the grid search
+search = GridSearchCV(pipeline, params, scoring="neg_mean_squared_error", n_jobs=-1)
 
 #fitting
-randomSearch.fit(XTrain, yTrain)
-bestModel = randomSearch.best_estimator_
+search.fit(xs, ys)
+bestModel = search.best_estimator_
 
 print("Best hyperparameters:")
-print(randomSearch.best_params_)
-
+print(search.best_params_)
+exit(0)
 
 #validation
 valPredictionsScaled = bestModel.predict(XVal)
