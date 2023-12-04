@@ -154,6 +154,72 @@ while True:
     elif int(graphNow) == 2:
         break
 
+# Transactions DF 3D plot
+while True:
+    wantsTransact = input("3D Plot available for transactions dataframe. Generate Plot?\n1. plot\n2. continue\n\nInput: ")
+    if wantsTransact == "1":
+        validList = ['date','store_nbr','transactions','datetime']
+        while True:
+            x = input("Choose the X axis from: 'date','store_nbr','transactions','datetime' ")
+            if x in validList:
+                transactionsDf[x].fillna(0,inplace=True)
+                break
+        while True:
+            y = input("Choose the Y axis from: 'date','store_nbr','transactions','datetime' ")
+            if y in validList:
+                transactionsDf[y].fillna(0,inplace=True)
+                break
+        while True:
+            z = input("Choose the Z axis from: 'date','store_nbr','transactions','datetime' ")
+            if z in validList:
+                transactionsDf[z].fillna(0,inplace=True)
+                break
+        fig = py.scatter_3d(
+            transactionsDf,
+            x,
+            y,
+            z,
+            color = z,
+            size_max = 15,
+            size = z
+            )
+        fig.show()
+    elif wantsTransact == "2":
+        break
+
+
+# Daily Transactions 3D plot
+while True:
+    wantsTransact = input("3D Plot available for daily transactions dataframe. Generate Plot?\n1. plot\n2. continue\n\nInput: ")
+    if wantsTransact == "1":
+        validList = ['date','transactions','7_day_MA','14_day_MA','30_day_MA','60_day_MA']
+        while True:
+            x = input("Choose the X axis from: 'date','transactions','7_day_MA','14_day_MA','30_day_MA','60_day_MA' ")
+            if x in validList:
+                daily_transactions[x].fillna(0,inplace=True)
+                break
+        while True:
+            y = input("Choose the Y axis from:'date','transactions','7_day_MA','14_day_MA','30_day_MA','60_day_MA' ")
+            if y in validList:
+                daily_transactions[y].fillna(0,inplace=True)
+                break
+        while True:
+            z = input("Choose the Z axis from: 'date','transactions','7_day_MA','14_day_MA','30_day_MA','60_day_MA' ")
+            if z in validList:
+                daily_transactions[z].fillna(0,inplace=True)
+                break
+        fig = py.scatter_3d(
+            daily_transactions,
+            x,
+            y,
+            z,
+            color = z,
+            size_max = 15,
+            size = z
+            )
+        fig.show()
+    elif wantsTransact == "2":
+        break
 
 
 # STEP 5 (Skewer the winged beast)
