@@ -15,11 +15,9 @@ import numpy as np
 import datetime as dt
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-from scipy.stats import randint, uniform
-from sklearn.cluster import KMeans
+from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -61,23 +59,14 @@ trainDf = pd.read_csv('train.csv')
 testDf = pd.read_csv('test.csv')
 transactionsDf = pd.read_csv('transactions.csv')
 
-# Before merging, limit the training set to 1 year, 2015
-
+# Before merging, limit the training set to 1 year, set below.
 while True:
-    validYears = ["1","2","3","4","5"]
+    validYears = [2013, 2014, 2015, 2016, 2017]
     print("\n" *100)
-    userin = input("Enter the year you'd like to perform the fit on\n1. 2013\n2. 2014\n3. 2015\n4. 2016\n5. 2017\n\nYear: ")
-    if userin in validYears:
-        if userin == "1":
-            userin = 2013
-        elif userin == "2":
-            userin = 2014
-        elif userin == "3":
-            userin = 2015
-        elif userin == "4":
-            userin = 2016
-        elif userin == "5":
-            userin = 2017
+    inputIndex = input("Enter the year you'd like to perform the fit on\n1. 2013\n2. 2014\n3. 2015\n4. 2016\n5. 2017\n\nYear: ")
+    inputIndex = int(inputIndex) - 1
+    if (0 <= inputIndex < len(validYears)):
+        userin = validYears[inputIndex]
         break
 
 print(f"Year Selected: {userin}")
@@ -120,23 +109,6 @@ print("Generating transactions graph")
 transactionsDf['date'] = pd.to_datetime(transactionsDf['date'])
 transactionsDf.sort_values('date', inplace=True)
 
-# Define the start and end dates for the interval
-if userin == 2013:
-    start_date = '2013-01-01'
-    end_date = '2014-12-31'
-elif userin == 2014:
-    start_date = '2014-01-01'
-    end_date = '2015-12-31'
-elif userin == 2015:
-    start_date = '2015-01-01'
-    end_date = '2016-12-31'
-elif userin == 2016:
-    start_date = '2016-01-01'
-    end_date = '2017-12-31'
-elif userin == 2017:
-    start_date = '2017-01-01'
-    end_date = '2018-12-31'
-
 """
 fig = py.scatter_3d(
 transactionsDf,
@@ -152,7 +124,8 @@ fig.show()
 """
 
 # Filter the DataFrame for the specified date range
-filtered_transactions = transactionsDf[(transactionsDf['date'] >= start_date) & (transactionsDf['date'] <= end_date)]
+transactionsDf['datetime'] = pd.to_datetime(transactionsDf['date'])
+filtered_transactions = transactionsDf[transactionsDf['datetime'].dt.year == int(userin)]
 
 # Aggregate transactions by date
 daily_transactions = filtered_transactions.groupby('date')['transactions'].sum().reset_index()
@@ -190,16 +163,12 @@ print("Preprocessing...")
 
 #preprocessing pipelines
 while True:
-    validStrats = ["1","2","3","4"]
+    validStrats = ['mean', 'most_frequent', 'constant']
     print("\n" *100)
-    userinImp = input("Enter the Strategy you'd like to use for the Numpipe Imputer\n1. Mean\n2. Most Frequent\n3. Constant\n\nStrategy: ")
-    if userinImp in validStrats:
-        if userinImp == "1":
-            userinImp = 'mean'
-        if userinImp == "2":
-            userinImp = 'most_frequent'
-        if userinImp == "3":
-            userinImp = 'constant'
+    inputIndex = input("Enter the Strategy you'd like to use for the Numpipe Imputer\n1. Mean\n2. Most Frequent\n3. Constant\n\nStrategy: ")
+    inputIndex = int(inputIndex) - 1
+    if (0 <= inputIndex < len(validStrats)):
+        userinImp = validStrats[inputIndex]
         break
 
 print(f"Strategy Chosen: {userinImp}")
@@ -210,16 +179,12 @@ numPipe = Pipeline([
 
 
 while True:
-    validStrats = ["1","2","3","4"]
+    validStrats = ['most_frequent', 'constant']
     print("\n" *100)
-    userinImp2 = input("Enter the Strategy you'd like to use for the Catpipe Imputer\n1. Mean\n2. Most Frequent\n3. Constant\n\nStrategy: ")
-    if userinImp2 in validStrats:
-        if userinImp2 == "1":
-            userinImp2 = 'mean'
-        if userinImp2 == "2":
-            userinImp2 = 'most_frequent'
-        if userinImp2 == "3":
-            userinImp2 = 'constant'
+    inputIndex = input("Enter the Strategy you'd like to use for the Catpipe Imputer\n1. Most Frequent\n2. Constant\n\nStrategy: ")
+    inputIndex = int(inputIndex) - 1
+    if (0 <= inputIndex < len(validStrats)):
+        userinImp2 = validStrats[inputIndex]
         break
 
 print(f"Strategy Chosen: {userinImp2}")
@@ -394,7 +359,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -552,8 +517,14 @@ while True:
                     plt.legend()
                     plt.show()
 
-
             elif final == "4":
+                # Predict the data for the testing data.
+                x_test = testDf[desiredCategorical + desiredNumerical]
+                y_pred = bestModel.predict(x_test)
+                testDf['sales'] = y_pred
+                output = testDf[['id', 'sales']]
+                output.to_csv('predictions.csv', index=False)
+            elif final == "5":
                 break
 
 
@@ -684,7 +655,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -844,6 +815,13 @@ while True:
 
 
             elif final == "4":
+                # Predict the data for the testing data.
+                x_test = testDf[desiredCategorical + desiredNumerical]
+                y_pred = bestModel.predict(x_test)
+                testDf['sales'] = y_pred
+                output = testDf[['id', 'sales']]
+                output.to_csv('predictions.csv', index=False)
+            elif final == "5":
                 break
 
 
@@ -995,7 +973,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -1155,6 +1133,13 @@ while True:
 
 
             elif final == "4":
+                # Predict the data for the testing data.
+                x_test = testDf[desiredCategorical + desiredNumerical]
+                y_pred = bestModel.predict(x_test)
+                testDf['sales'] = y_pred
+                output = testDf[['id', 'sales']]
+                output.to_csv('predictions.csv', index=False)
+            elif final == "5":
                 break
 
 
@@ -1314,7 +1299,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -1474,6 +1459,13 @@ while True:
 
 
             elif final == "4":
+                # Predict the data for the testing data.
+                x_test = testDf[desiredCategorical + desiredNumerical]
+                y_pred = bestModel.predict(x_test)
+                testDf['sales'] = y_pred
+                output = testDf[['id', 'sales']]
+                output.to_csv('predictions.csv', index=False)
+            elif final == "5":
                 break
 
 
