@@ -359,7 +359,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Bar Chart\n6. Line Chart\n7. Pie Chart\n8. Histogram\n9. Box Plot\n10. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -524,7 +524,42 @@ while True:
                 testDf['sales'] = y_pred
                 output = testDf[['id', 'sales']]
                 output.to_csv('predictions.csv', index=False)
-            elif final == "5":
+            
+            elif final == "5":  # Bar Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.bar(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "6":  # Line Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.line(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "7":  # Pie Chart
+                column = input("Choose the column for pie chart from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                values = xs[column].value_counts().reset_index()
+                values.columns = ['category', 'count']
+                fig = py.pie(values, names='category', values='count')
+                fig.show()
+
+            elif final == "8":  # Histogram
+                column = input("Choose the column for histogram from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[column].fillna(0, inplace=True)
+                fig = py.histogram(xs, x=column)
+                fig.show()
+
+            elif final == "9":  # Box Plot
+                y = input("Choose the Y axis for box plot from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[y].fillna(0, inplace=True)
+                fig = py.box(xs, y=y)
+                fig.show()
+            elif final == "10":
                 break
 
 
@@ -655,7 +690,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Bar Chart\n6. Line Chart\n7. Pie Chart\n8. Histogram\n9. Box Plot\n10. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -821,7 +856,42 @@ while True:
                 testDf['sales'] = y_pred
                 output = testDf[['id', 'sales']]
                 output.to_csv('predictions.csv', index=False)
-            elif final == "5":
+
+            elif final == "5":  # Bar Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.bar(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "6":  # Line Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.line(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "7":  # Pie Chart
+                column = input("Choose the column for pie chart from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                values = xs[column].value_counts().reset_index()
+                values.columns = ['category', 'count']
+                fig = py.pie(values, names='category', values='count')
+                fig.show()
+
+            elif final == "8":  # Histogram
+                column = input("Choose the column for histogram from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[column].fillna(0, inplace=True)
+                fig = py.histogram(xs, x=column)
+                fig.show()
+
+            elif final == "9":  # Box Plot
+                y = input("Choose the Y axis for box plot from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[y].fillna(0, inplace=True)
+                fig = py.box(xs, y=y)
+                fig.show()
+            elif final == "10":
                 break
 
 
@@ -973,7 +1043,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Bar Chart\n6. Line Chart\n7. Pie Chart\n8. Histogram\n9. Box Plot\n10. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -1139,7 +1209,42 @@ while True:
                 testDf['sales'] = y_pred
                 output = testDf[['id', 'sales']]
                 output.to_csv('predictions.csv', index=False)
-            elif final == "5":
+            
+            elif final == "5":  # Bar Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.bar(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "6":  # Line Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.line(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "7":  # Pie Chart
+                column = input("Choose the column for pie chart from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                values = xs[column].value_counts().reset_index()
+                values.columns = ['category', 'count']
+                fig = py.pie(values, names='category', values='count')
+                fig.show()
+
+            elif final == "8":  # Histogram
+                column = input("Choose the column for histogram from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[column].fillna(0, inplace=True)
+                fig = py.histogram(xs, x=column)
+                fig.show()
+
+            elif final == "9":  # Box Plot
+                y = input("Choose the Y axis for box plot from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[y].fillna(0, inplace=True)
+                fig = py.box(xs, y=y)
+                fig.show()
+            elif final == "10":
                 break
 
 
@@ -1299,7 +1404,7 @@ while True:
         print("Fit Complete")
 
         while True:
-            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Exit Program\n\nInput: ")
+            final = input("Choose Data to Display\n\n1. Scores\n2. 3D Visualization\n3. Transaction Graph\n4. CSV\n5. Bar Chart\n6. Line Chart\n7. Pie Chart\n8. Histogram\n9. Box Plot\n10. Exit Program\n\nInput: ")
             if final == "1":
                 print("Best hyperparameters:")
                 print(search.best_params_)
@@ -1465,7 +1570,42 @@ while True:
                 testDf['sales'] = y_pred
                 output = testDf[['id', 'sales']]
                 output.to_csv('predictions.csv', index=False)
-            elif final == "5":
+            
+            elif final == "5":  # Bar Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.bar(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "6":  # Line Chart
+                x = input("Choose the X axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                y = input("Choose the Y axis from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[x].fillna(0, inplace=True)
+                xs[y].fillna(0, inplace=True)
+                fig = py.line(xs, x=x, y=y)
+                fig.show()
+
+            elif final == "7":  # Pie Chart
+                column = input("Choose the column for pie chart from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                values = xs[column].value_counts().reset_index()
+                values.columns = ['category', 'count']
+                fig = py.pie(values, names='category', values='count')
+                fig.show()
+
+            elif final == "8":  # Histogram
+                column = input("Choose the column for histogram from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[column].fillna(0, inplace=True)
+                fig = py.histogram(xs, x=column)
+                fig.show()
+
+            elif final == "9":  # Box Plot
+                y = input("Choose the Y axis for box plot from: 'family', 'store_nbr', 'onpromotion', 'is_holiday' ")
+                xs[y].fillna(0, inplace=True)
+                fig = py.box(xs, y=y)
+                fig.show()
+            elif final == "10":
                 break
 
 
